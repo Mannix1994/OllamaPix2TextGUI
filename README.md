@@ -57,6 +57,8 @@ ollama serve
 
 ### 3. 拉取 GLM-OCR 模型
 
+https://ollama.com/library/glm-ocr
+
 保持服务启动状态，新开一个 WSL 终端窗口执行：
 
 ```bash
@@ -70,7 +72,16 @@ ollama pull glm-ocr
 ollama run glm-ocr "Text Recognition: ./image.png"
 ```
 
----
+### 4. 其他OCR模型
+* PaddleOCR-VL: https://ollama.com/MedAIBase/PaddleOCR-VL
+* DeepSeek-OCR: https://ollama.com/library/deepseek-ocr
+
+保持服务启动状态，新开一个 WSL 终端窗口执行：
+
+```bash
+ollama pull deepseek-ocr
+ollama pull PaddleOCR-VL
+```
 
 ## 💻 第二步：客户端安装 (Windows)
 
