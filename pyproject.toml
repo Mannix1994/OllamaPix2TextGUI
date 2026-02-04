@@ -18,7 +18,7 @@ dependencies = [
     "pywin32; sys_platform == 'win32'"
 ]
 
-[project.scripts]
+[project.gui-scripts]
 # 定义可执行二进制/脚本命令
 # 格式为: 命令名称 = "脚本路径:函数名"
 # 假设你的代码文件在 scripts/run_ocr.py，入口是 main() 函数

@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
 
         # 3. 动作按钮行
         btn_layout = QHBoxLayout()
-        self.capture_btn = QPushButton("📷 截图识别 (Alt + A)")
+        self.capture_btn = QPushButton("📷 截图识别 (Alt + A)/按ESC退出截图")
         self.capture_btn.setFixedHeight(45)
         self.capture_btn.setStyleSheet("font-weight: bold; background-color: #e8f5e9;")
         self.capture_btn.clicked.connect(self.start_capture)
@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    if sys.platform.startswith('win'):
+    if sys.platform == 'win32':
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("my_company.glm_ocr.gui.v1")
     app = QApplication(sys.argv)
