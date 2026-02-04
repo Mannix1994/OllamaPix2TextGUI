@@ -1,0 +1,4 @@
+.idea
+.venv
+build
+wsl_ollama_ocr.egg-info

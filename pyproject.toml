@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wsl-ollama-ocr"
+version = "0.1.0"
+description = "基于 WSL Ollama 的通用文本与公式 OCR 助手"
+readme = "README.md"
+requires-python = ">=3.9"
+# 这里包含了你确认过的所有必要依赖
+dependencies = [
+    "PyQt6",
+    "pyperclip",
+    "Pillow",
+    "keyboard",
+    "requests",
+    "pywin32; sys_platform == 'win32'"
+]
+
+[project.scripts]
+# 定义可执行二进制/脚本命令
+# 格式为: 命令名称 = "脚本路径:函数名"
+# 假设你的代码文件在 scripts/run_ocr.py，入口是 main() 函数
+ollama-ocr = "wsl_ollama_ocr.run_ocr:main"
+
+[tool.setuptools]
+packages = ["wsl_ollama_ocr"]
+
+[tool.setuptools.package-data]
+"*" = ["*.png"]
