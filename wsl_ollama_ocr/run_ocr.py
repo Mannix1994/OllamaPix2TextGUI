@@ -1,6 +1,5 @@
 import sys
 import pyperclip
-import keyboard
 import io
 import base64
 import requests
@@ -14,6 +13,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QPushButton, QTextEdit,
 from PyQt6.QtCore import Qt, QRect, pyqtSignal, QObject, QThread
 from PyQt6.QtGui import QPainter, QColor, QPen, QKeyEvent, QIcon
 from PIL import ImageGrab
+from pynput import keyboard
 
 # --- 配置管理逻辑 ---
 CONFIG_DIR = os.path.expanduser("~/.glm-ocr")
@@ -148,9 +148,8 @@ class ScreenShotTool(QWidget):
                              self.mapFromGlobal(rect.topLeft()).y(),
                              rect.width(), rect.height())
 
+
 def get_resource_path(relative_path):
-    """获取安装目录下的资源文件绝对路径"""
-    # 这里的 base_path 会指向 scripts 文件夹在 site-packages 中的位置
     base_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_path, relative_path)
 
@@ -159,11 +158,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Ollama-OCR助手")
-        self.setWindowIcon(QIcon(get_resource_path("icon.png")))
+        icon_path = get_resource_path("icon.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
         self.resize(850, 650)
         self.config = load_config()
         self.last_screenshot = None
-        self.is_running = False  # 状态锁
+        self.is_running = False
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -222,12 +224,17 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("状态: 就绪")
         main_layout.addWidget(self.status_label)
 
+        # --- 热键监听 (pynput 方案) ---
         self.hotkey_helper = HotkeySignal()
         self.hotkey_helper.signal.connect(self.start_capture)
-        keyboard.add_hotkey('alt+a', lambda: self.hotkey_helper.signal.emit())
+
+        # 启动后台非阻塞监听
+        self.listener = keyboard.GlobalHotKeys({
+            '<alt>+a': self.hotkey_helper.signal.emit
+        })
+        self.listener.start()
 
     def set_ui_loading(self, loading: bool):
-        """统一管理按钮的视觉反馈和交互锁定"""
         self.is_running = loading
         self.capture_btn.setEnabled(not loading)
         self.reparse_btn.setEnabled(not loading)
@@ -246,7 +253,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "保存成功", f"设置已保存。{CONFIG_FILE}")
 
     def start_capture(self):
-        if self.is_running: return  # 拦截重复触发
+        if self.is_running: return
 
         self.hide()
         QApplication.processEvents()
@@ -268,8 +275,7 @@ class MainWindow(QMainWindow):
         self.run_ocr(self.last_screenshot)
 
     def run_ocr(self, pil_img):
-        self.set_ui_loading(True)  # 视觉效果：禁用按钮并改名
-
+        self.set_ui_loading(True)
         url = self.url_input.text().strip()
         model = self.model_input.text().strip()
         prompt = self.prompt_input.toPlainText().strip()
@@ -281,17 +287,20 @@ class MainWindow(QMainWindow):
         self.worker.start()
 
     def on_ocr_success(self, raw_text):
-        self.set_ui_loading(False)  # 视觉效果：恢复按钮
+        self.set_ui_loading(False)
         self.result_area.setText(raw_text)
         pyperclip.copy(raw_text)
         self.status_label.setText("状态: 识别完成")
 
     def on_ocr_error(self, err):
-        self.set_ui_loading(False)  # 视觉效果：恢复按钮
+        self.set_ui_loading(False)
         self.status_label.setText("状态: 识别失败")
         self.result_area.setText(f"错误信息:\n{err}")
 
     def closeEvent(self, event):
+        # 退出时停止监听器
+        if hasattr(self, 'listener'):
+            self.listener.stop()
         save_to_disk(self.url_input.text().strip(), self.model_input.text().strip(),
                      self.prompt_input.toPlainText().strip())
         super().closeEvent(event)
@@ -305,8 +314,7 @@ def main():
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-    
+
 
 if __name__ == '__main__':
     main()
-
